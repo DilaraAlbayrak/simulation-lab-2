@@ -1,12 +1,15 @@
 #pragma once
 // Simulation template, based on the Microsoft DX11 tutorial 04
 
-#include <windows.h>
 #include <d3d11_1.h>
 #include <d3dcompiler.h>
 #include <directxmath.h>
 #include <atlbase.h>
 #include <fstream>
+
+#include "SceneOpening.h"
+#include "Bouncing.h"
+#include "Colliding.h"
 
 using namespace DirectX;
 
@@ -28,7 +31,6 @@ struct ConstantBuffer
 	XMMATRIX mView;
 	XMMATRIX mProjection;
 };
-
 
 class D3DFramework final {
 
@@ -53,18 +55,39 @@ class D3DFramework final {
 	XMMATRIX _View = {};
 	XMMATRIX _Projection = {};
 
-	float _rotation = 0.0f;
-	
+	XMFLOAT4 _bgColour = { 0.2f, 0.2f, 0.6f, 1.0f };
+
+	// scenario stuffs
+	ScenarioType _scenarioType = ScenarioType::SCENE_OPENING;
+	std::unique_ptr<Scenario> _scenario;
+
 	static std::unique_ptr<D3DFramework> _instance;
+
+	void initImGui();
+	void renderImGui();
+
 public:
 
-	D3DFramework() = default;
+	D3DFramework()
+	{
+		_scenario = std::make_unique<SceneOpening>(); 
+		_scenarioType = _scenario->getScenarioType();
+		auto* openingScene = dynamic_cast<SceneOpening*>(_scenario.get());
+		if (openingScene)
+		{
+			openingScene->setBgColour(_bgColour);
+			openingScene->setOnColorChangeCallback([this](const DirectX::XMFLOAT4& colour) {
+				_bgColour = colour;
+				});
+			openingScene->onLoad();
+		}
+	}
 	D3DFramework(D3DFramework&) = delete;
 	D3DFramework(D3DFramework&&) = delete;
 	D3DFramework operator=(const D3DFramework&) = delete;
 	D3DFramework operator=(const D3DFramework&&) = delete;
 	~D3DFramework();
-	
+
 	static D3DFramework& getInstance() { return *_instance; }
 
 	// callback function that Windows calls whenever an event occurs for the window (e.g., mouse clicks, key presses)
@@ -75,4 +98,21 @@ public:
 	static HRESULT compileShaderFromFile(const WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut);
 	HRESULT initDevice();
 	void render();
+
+	HWND getWindowHandle() const { return _hWnd; }
+	ID3D11Device* getDevice() const { return _pd3dDevice; }
+	ID3D11DeviceContext* getDeviceContext() const { return _pImmediateContext; }
+
+	void setScenario(std::unique_ptr<Scenario> scenario, ScenarioType scenarioType)
+	{
+		if (_scenarioType == scenarioType) return;
+
+		_scenario.get()->onUnload();
+		_scenario = std::move(scenario);
+		_scenarioType = _scenario->getScenarioType();
+		_scenario.get()->onLoad();
+	}
+
+	void setBackgroudColor(const XMFLOAT4& colour) { _bgColour = colour; }
+	XMFLOAT4 getBackgroundColor() const { return _bgColour; }
 };

@@ -2,19 +2,24 @@
 #include <directxcolors.h>
 #include <vector>
 #include "Resource.h"
+#include <imgui_impl_dx11.h>
+#include <imgui_impl_win32.h>
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 std::unique_ptr<D3DFramework> D3DFramework::_instance = std::make_unique<D3DFramework>();
 
 //--------------------------------------------------------------------------------------
 // Called every time the application receives a message
 //--------------------------------------------------------------------------------------
-LRESULT CALLBACK D3DFramework::wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-	PAINTSTRUCT ps;
-	std::string msg;
-	auto& app = D3DFramework::getInstance();
-	
+LRESULT CALLBACK D3DFramework::wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+		return true;
+
 	switch (message) {
 	case WM_PAINT:
+		PAINTSTRUCT ps;
 		BeginPaint(hWnd, &ps);
 		EndPaint(hWnd, &ps);
 		break;
@@ -23,52 +28,12 @@ LRESULT CALLBACK D3DFramework::wndProc(HWND hWnd, UINT message, WPARAM wParam, L
 		PostQuitMessage(0);
 		break;
 
-	case WM_KEYDOWN:
-		switch (wParam) {
-		case 'A':
-			msg = "A pressed";
-			break;
-		case 'B':
-			if (GetKeyState(VK_CONTROL) < 0) {
-				msg = "CTRL B pressed";
-			}
-			else {
-				msg = "B pressed";
-			}
-			break;
-		case 'R':
-			app._rotation = 0.0f;
-			break;
-		case VK_LEFT:
-			msg = "Left cursor pressed";
-			break;
-		case VK_F1:
-			msg = "F1 pressed";
-			break;
-		default:
-			break;
-		}
-		break;
-
-	case WM_KEYUP:
-		switch (wParam) {
-		case 'A':
-			msg = "A released";
-			break;
-		case '1':
-			msg = "1 released";
-			break;
-		default:
-			break;
-		}
-
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
 	return 0;
 }
-
 
 //--------------------------------------------------------------------------------------
 // Register class and create window
@@ -95,7 +60,7 @@ HRESULT D3DFramework::initWindow(HINSTANCE hInstance, int nCmdShow) {
 	_hInst = hInstance;
 	RECT rc = { 0, 0, 800, 600 };
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
-	_hWnd = CreateWindow(L"Starter Template", L"Direct3D 11 Simulation",
+	_hWnd = CreateWindow(L"Starter Template", L"Simulation Sandbox",
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
 		CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance,
 		nullptr);
@@ -417,11 +382,57 @@ HRESULT D3DFramework::initDevice()
 	_View = XMMatrixLookAtLH(Eye, At, Up);
 
 	// Initialize the projection matrix
-	//_Projection = XMMatrixPerspectiveFovLH(XM_PIDIV2, width / static_cast<FLOAT>(height), 0.01f, 100.0f);
-	// projection matrix for orthographic view
-	_Projection = XMMatrixOrthographicLH(width*0.01f, height * 0.01f, 0.01f, 100.0f);
+	_Projection = XMMatrixPerspectiveFovLH(XM_PIDIV2, width / static_cast<FLOAT>(height), 0.01f, 100.0f);
+
+	initImGui();
 
 	return S_OK;
+}
+
+void D3DFramework::initImGui()
+{
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsDark();
+	ImGui_ImplWin32_Init(_hWnd);
+	ImGui_ImplDX11_Init(_pd3dDevice, _pImmediateContext);
+}
+
+void D3DFramework::renderImGui() {
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+	if (ImGui::BeginMainMenuBar()) {
+		if (ImGui::BeginMenu("Scenario")) {
+			if (ImGui::MenuItem("Scene Opening", nullptr, false, _scenarioType!=ScenarioType::SCENE_OPENING)) {
+				setScenario(std::make_unique<SceneOpening>(), ScenarioType::SCENE_OPENING);
+				auto* openingScene = dynamic_cast<SceneOpening*>(_scenario.get());
+				if (openingScene)
+				{
+					openingScene->setBgColour(_bgColour);
+					openingScene->setOnColorChangeCallback([this](const DirectX::XMFLOAT4& colour) {
+						_bgColour = colour;
+						});
+				}
+			}
+			if (ImGui::MenuItem("Bouncing", nullptr, false, _scenarioType != ScenarioType::BOUNCING)) {
+				setScenario(std::make_unique<Bouncing>(), ScenarioType::BOUNCING);
+			}
+			if (ImGui::MenuItem("Colliding", nullptr, false, _scenarioType != ScenarioType::COLLIDING)) {
+				setScenario(std::make_unique<Colliding>(), ScenarioType::COLLIDING);
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+	}
+
+	if (_scenario) {
+		_scenario->ImGuiMainMenu();
+	}
+
+	ImGui::Render();
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
 
@@ -442,17 +453,13 @@ D3DFramework::~D3DFramework() {
 //--------------------------------------------------------------------------------------
 // Render a frame
 //--------------------------------------------------------------------------------------
-void D3DFramework::render() {
-	//
-	// Animate the cube
-	//
-	_rotation += 0.0001f;
-	_World = XMMatrixRotationY(_rotation);
-
+void D3DFramework::render()
+{
 	//
 	// Clear the back buffer
 	//
-	_pImmediateContext->ClearRenderTargetView(_pRenderTargetView, Colors::MidnightBlue);
+	float clearColour[4] = { _bgColour.x, _bgColour.y, _bgColour.z, _bgColour.w };
+	_pImmediateContext->ClearRenderTargetView(_pRenderTargetView, clearColour);
 
 	//
 	// Update variables
@@ -461,15 +468,9 @@ void D3DFramework::render() {
 	_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb, 0, 0);
 
 	//
-	// Renders a triangle
-	//
-	_pImmediateContext->VSSetShader(_pVertexShader, nullptr, 0);
-	_pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer.p);
-	_pImmediateContext->PSSetShader(_pPixelShader, nullptr, 0);
-	_pImmediateContext->DrawIndexed(36, 0, 0);        // 36 vertices needed for 12 triangles in a triangle list
-
-	//
 	// Present our back buffer to our front buffer
 	//
+
+	renderImGui();
 	_swapChain->Present(0, 0);
 }
