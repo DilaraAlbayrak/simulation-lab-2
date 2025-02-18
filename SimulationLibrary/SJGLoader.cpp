@@ -4,7 +4,7 @@
 #include <sstream>
 #include <vector>
 
-bool SJGLoader::Load(const std::string& filename, std::vector<VertexData>& vertices, std::vector<int>& indices)
+bool SJGLoader::Load(const std::string& filename, std::vector<Vertex>& vertices, std::vector<int>& indices)
 {
     std::ifstream file(filename);
     if (!file)
@@ -53,7 +53,7 @@ bool SJGLoader::Load(const std::string& filename, std::vector<VertexData>& verti
 
             if (tokens.size() == 6) // x, y, z, nx, ny, nz
             {
-                VertexData vertex;
+                Vertex vertex;
                 vertex.position.x = std::stof(tokens[0]);
                 vertex.position.y = std::stof(tokens[1]);
                 vertex.position.z = std::stof(tokens[2]);

@@ -9,7 +9,7 @@ void Bouncing::onUnload()
 {
 	OutputDebugString(L">>>>>>>>>> Bouncing::onUnload\n");
 }
-void Bouncing::onUpdate()
+void Bouncing::onUpdate(float dt)
 {
 }
 

@@ -1,9 +1,6 @@
 #pragma once
 // Simulation template, based on the Microsoft DX11 tutorial 04
 
-#include <d3d11_1.h>
-#include <d3dcompiler.h>
-#include <directxmath.h>
 #include <atlbase.h>
 #include <fstream>
 

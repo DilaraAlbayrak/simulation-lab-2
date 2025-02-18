@@ -11,7 +11,7 @@ void SceneOpening::onUnload()
     OutputDebugString(L">>>>>>>>>> SceneOpening::onUnload\n");
 }
 
-void SceneOpening::onUpdate()
+void SceneOpening::onUpdate(float dt)
 {
 }
 

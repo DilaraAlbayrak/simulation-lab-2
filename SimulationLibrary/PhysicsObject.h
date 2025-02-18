@@ -8,7 +8,7 @@ private:
     DirectX::XMFLOAT3 velocity;
     DirectX::XMFLOAT4X4 transformMatrix;
 
-    std::vector<VertexData> vertices;
+    std::vector<Vertex> vertices;
     std::vector<int> indices;
 
 public:
@@ -33,7 +33,7 @@ public:
         DirectX::XMStoreFloat4x4(&transformMatrix, translation);
     }
 
-    const std::vector<VertexData>& GetVertices() const { return vertices; }
+    const std::vector<Vertex>& GetVertices() const { return vertices; }
     const std::vector<int>& GetIndices() const { return indices; }
     const DirectX::XMFLOAT4X4& GetTransformMatrix() const { return transformMatrix; }
 };

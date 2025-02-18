@@ -3,7 +3,7 @@
 #include <string>
 #include <DirectXMath.h>
 
-struct VertexData
+struct Vertex
 {
     DirectX::XMFLOAT3 position;
     DirectX::XMFLOAT3 normal;
@@ -12,5 +12,5 @@ struct VertexData
 class SJGLoader
 {
 public:
-    static bool Load(const std::string& filename, std::vector<VertexData>& vertices, std::vector<int>& indices);
+    static bool Load(const std::string& filename, std::vector<Vertex>& vertices, std::vector<int>& indices);
 };
