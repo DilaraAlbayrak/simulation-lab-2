@@ -26,6 +26,12 @@ struct ConstantBufferCamera
 	XMVECTOR mEyePos;
 };
 
+enum CameraType
+{
+	ORTHOGRAPHIC,
+	PERSPECTIVE
+};
+
 struct Camera
 {
 	XMVECTOR eye;
@@ -42,6 +48,52 @@ struct Camera
 
 		const float fov = XM_PIDIV2 / zoom; // Zoom scales the FOV
 		projection = XMMatrixPerspectiveFovLH(fov, 800.0f / 600.0f, 0.01f, 1000.0f);
+		view = XMMatrixLookAtLH(eye, at, up);
+
+		//setOrthographicProjection();
+	}
+
+	// temp
+	std::string XMVectorToString(const DirectX::XMVECTOR& vec) {
+		DirectX::XMFLOAT3 float3;
+		DirectX::XMStoreFloat3(&float3, vec);
+		return "X: " + std::to_string(float3.x) + " Y: " + std::to_string(float3.y) + " Z: " + std::to_string(float3.z);
+	}
+
+	void rotateAroundOrigin(float angle) {
+		float radius = 3.0f; 
+
+		float x = radius * sin(angle);
+		float z = radius * cos(angle);
+
+		eye = XMVectorSet(0.0f, -3.0f, z, 0.0f);
+		at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f); 
+		up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); 
+
+		/*OutputDebugStringA("--------------------\n");
+		OutputDebugStringA(XMVectorToString(eye).c_str());
+		OutputDebugStringA("\n");
+		OutputDebugStringA(XMVectorToString(at).c_str());
+		OutputDebugStringA("\n");
+		OutputDebugStringA(XMVectorToString(up).c_str());
+		OutputDebugStringA("\n");
+		OutputDebugStringA(std::to_string(angle).c_str());
+		OutputDebugStringA("\n");*/
+
+		updateViewProjection();
+	}
+
+	void setOrthographicProjection()
+	{
+		eye = XMVectorSet(0.0f, 0.0f, 3.0f, 0.0f);
+		at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		up = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+		zoom = 1.0f;
+		const float orthoWidth = 10.0f / zoom;
+		const float orthoHeight = (_windowHeight * 1.0f / _windowWidth) * orthoWidth;
+
+		projection = XMMatrixOrthographicLH(orthoWidth, orthoHeight, 0.01f, 1000.0f);
+
 		view = XMMatrixLookAtLH(eye, at, up);
 	}
 };

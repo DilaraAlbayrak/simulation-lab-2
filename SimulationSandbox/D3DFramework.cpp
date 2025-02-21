@@ -259,6 +259,25 @@ void D3DFramework::renderImGui() {
 		ImGui::EndMainMenuBar();
 	}
 
+	if (_scenarioType != ScenarioType::SCENE_OPENING) {
+		if (ImGui::BeginMainMenuBar()) {
+			if (ImGui::BeginMenu("Camera")) {
+				if (ImGui::MenuItem("Reset", nullptr, false, true)) {
+					initCamera();
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::EndMainMenuBar();
+		}
+
+		static float cameraAngle = 0.0f; 
+		ImGui::Begin("Camera Controls");
+		ImGui::SliderAngle("Rotation", &cameraAngle, 0.0f, 360.0f); 
+		ImGui::End();
+
+		_camera.rotateAroundOrigin(cameraAngle);
+	}
+
 	if (_scenario) {
 		_scenario->ImGuiMainMenu();
 	}
