@@ -12,21 +12,38 @@ using namespace DirectX;
 
 #define COMPILE_CSO
 
+constexpr UINT _windowWidth = 800;
+constexpr UINT _windowHeight = 600;
+
 //--------------------------------------------------------------------------------------
 // Structures
 //--------------------------------------------------------------------------------------
-struct SimpleVertex
-{
-	XMFLOAT3 Pos;
-	XMFLOAT4 Color;
-};
 
-
-struct ConstantBuffer
+struct ConstantBufferCamera
 {
-	XMMATRIX mWorld;
 	XMMATRIX mView;
 	XMMATRIX mProjection;
+	XMVECTOR mEyePos;
+};
+
+struct Camera
+{
+	XMVECTOR eye;
+	XMVECTOR at;
+	XMVECTOR up;
+	XMMATRIX view = {};
+	XMMATRIX projection = {};
+	float zoom = 1.0f; // Default zoom level
+
+	void updateViewProjection() {
+		// Adjust field of view (FOV) based on zoom level
+		if (zoom < 0.9f) zoom = 0.9f;
+		if (zoom > 1.6f) zoom = 1.6f;
+
+		const float fov = XM_PIDIV2 / zoom; // Zoom scales the FOV
+		projection = XMMatrixPerspectiveFovLH(fov, 800.0f / 600.0f, 0.01f, 1000.0f);
+		view = XMMatrixLookAtLH(eye, at, up);
+	}
 };
 
 class D3DFramework final {
@@ -48,11 +65,17 @@ class D3DFramework final {
 	CComPtr <ID3D11Buffer> _pVertexBuffer;
 	CComPtr <ID3D11Buffer> _pIndexBuffer;
 	CComPtr <ID3D11Buffer> _pConstantBuffer;
+	CComPtr <ID3D11Buffer> _cameraConstantBuffer;
 	XMMATRIX _World = {};
 	XMMATRIX _View = {};
 	XMMATRIX _Projection = {};
 
 	XMFLOAT4 _bgColour = { 0.2f, 0.2f, 0.6f, 1.0f };
+	static float time;
+	float deltaTime = 0.0f;
+	float deltaTimeFactor = 1.0f;
+
+	Camera _camera;
 
 	// scenario stuffs
 	ScenarioType _scenarioType = ScenarioType::SCENE_OPENING;
@@ -62,6 +85,8 @@ class D3DFramework final {
 
 	void initImGui();
 	void renderImGui();
+
+	void initCamera();
 
 public:
 
@@ -108,6 +133,15 @@ public:
 		_scenario = std::move(scenario);
 		_scenarioType = _scenario->getScenarioType();
 		_scenario.get()->onLoad();
+
+		if (_scenarioType == ScenarioType::COLLIDING)
+		{
+			auto* collidingScene = dynamic_cast<Colliding*>(_scenario.get());
+			if (collidingScene)
+			{
+				collidingScene->initObjects(_pd3dDevice, _pImmediateContext);
+			}
+		}
 	}
 
 	void setBackgroudColor(const XMFLOAT4& colour) { _bgColour = colour; }

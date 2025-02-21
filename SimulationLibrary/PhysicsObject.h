@@ -4,18 +4,20 @@
 class PhysicsObject
 {
 private:
-    DirectX::XMFLOAT3 position;
-    DirectX::XMFLOAT3 velocity;
-    DirectX::XMFLOAT4X4 transformMatrix;
+    DirectX::XMFLOAT3 position;   // Position in world space
+    DirectX::XMFLOAT3 rotation;   // Rotation (pitch, yaw, roll)
+    DirectX::XMFLOAT3 scale;      // Scale factors
+
+    DirectX::XMFLOAT4X4 transformMatrix; // World matrix
 
     std::vector<Vertex> vertices;
     std::vector<int> indices;
 
 public:
-    PhysicsObject(DirectX::XMFLOAT3 startPos, DirectX::XMFLOAT3 startVel)
-        : position(startPos), velocity(startVel)
+    PhysicsObject(DirectX::XMFLOAT3 startPos = {0.0f, 0.0f, 0.0f}, DirectX::XMFLOAT3 startRot = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 startScale = { 1.0f, 1.0f, 1.0f })
+        : position(startPos), rotation(startRot), scale(startScale)
     {
-        DirectX::XMStoreFloat4x4(&transformMatrix, DirectX::XMMatrixIdentity());
+        updateWorldMatrix();
     }
 
     bool LoadModel(const std::string& filename)
@@ -25,15 +27,29 @@ public:
 
     void Update(float deltaTime)
     {
-        position.x += velocity.x * deltaTime;
-        position.y += velocity.y * deltaTime;
-        position.z += velocity.z * deltaTime;
+        position.x += deltaTime;
+        position.y += deltaTime;
+        position.z += deltaTime;
 
-        DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
-        DirectX::XMStoreFloat4x4(&transformMatrix, translation);
+        updateWorldMatrix();
     }
 
-    const std::vector<Vertex>& GetVertices() const { return vertices; }
-    const std::vector<int>& GetIndices() const { return indices; }
-    const DirectX::XMFLOAT4X4& GetTransformMatrix() const { return transformMatrix; }
+    void updateWorldMatrix()
+    {
+        DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z);
+        DirectX::XMMATRIX rotationMatrix =
+            DirectX::XMMatrixRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
+        DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
+
+        DirectX::XMMATRIX worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
+        DirectX::XMStoreFloat4x4(&transformMatrix, worldMatrix);
+    }
+
+    const std::vector<Vertex>& getVertices() const { return vertices; }
+    const std::vector<int>& getIndices() const { return indices; }
+    const DirectX::XMFLOAT4X4& getTransformMatrix() const { return transformMatrix; }
+
+    void setPosition(const DirectX::XMFLOAT3& newPos) { position = newPos; updateWorldMatrix(); }
+    void setRotation(const DirectX::XMFLOAT3& newRot) { rotation = newRot; updateWorldMatrix(); }
+    void setScale(const DirectX::XMFLOAT3& newScale) { scale = newScale; updateWorldMatrix(); }
 };

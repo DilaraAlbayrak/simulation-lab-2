@@ -187,6 +187,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Scenario.h" />
     <ClInclude Include="SceneOpening.h" />
+    <ClInclude Include="ShaderManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Bouncing.cpp" />
@@ -211,6 +212,7 @@
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Scenario.cpp" />
     <ClCompile Include="SceneOpening.cpp" />
+    <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="Simulation.cpp" />
   </ItemGroup>
   <ItemGroup>

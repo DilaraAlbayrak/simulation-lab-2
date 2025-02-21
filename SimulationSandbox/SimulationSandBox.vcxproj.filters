@@ -51,6 +51,9 @@
     <ClCompile Include="ImGui\backends\imgui_impl_win32.cpp">
       <Filter>ImGui Files</Filter>
     </ClCompile>
+    <ClCompile Include="ShaderManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h" />
@@ -70,6 +73,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="NotImplementedException .h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -7,6 +7,7 @@ struct Vertex
 {
     DirectX::XMFLOAT3 position;
     DirectX::XMFLOAT3 normal;
+	DirectX::XMFLOAT4 colour = { 0.5f, 0.5f, 0.5f, 1.0f };
 };
 
 class SJGLoader

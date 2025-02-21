@@ -3,7 +3,7 @@
 
 TEST(SJGLoaderTest, CanLoadSJGFile)
 {
-    std::vector<VertexData> vertices;
+    std::vector<Vertex> vertices;
     std::vector<int> indices;
     bool result = SJGLoader::Load("sphere.sjg", vertices, indices);
 
