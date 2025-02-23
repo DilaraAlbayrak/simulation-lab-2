@@ -214,7 +214,7 @@ HRESULT D3DFramework::initDevice()
 
 void D3DFramework::initCamera()
 {
-	_camera.eye = XMVectorSet(0.0f, -3.0f, 3.0f, 0.0f);
+	_camera.eye = XMVectorSet(0.0f, -3.0f, 0.0f, 0.0f);
 	_camera.at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	_camera.up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	_camera.zoom = 1.0f;
@@ -236,30 +236,37 @@ void D3DFramework::renderImGui() {
 	ImGui::NewFrame();
 
 	if (ImGui::BeginMainMenuBar()) {
-		if (ImGui::BeginMenu("Scenario")) {
-			if (ImGui::MenuItem("Scene Opening", nullptr, false, _scenarioType!=ScenarioType::SCENE_OPENING)) {
-				setScenario(std::make_unique<SceneOpening>(), ScenarioType::SCENE_OPENING);
-				auto* openingScene = dynamic_cast<SceneOpening*>(_scenario.get());
-				if (openingScene)
-				{
-					openingScene->setBgColour(_bgColour);
-					openingScene->setOnColorChangeCallback([this](const DirectX::XMFLOAT4& colour) {
-						_bgColour = colour;
-						});
-				}
+		if (ImGui::BeginMenu("Scenario"))
+		{
+			if (ImGui::MenuItem("Bouncing", nullptr, false)) {
+				setScenario(std::make_unique<Bouncing>());
 			}
-			if (ImGui::MenuItem("Bouncing", nullptr, false, _scenarioType != ScenarioType::BOUNCING)) {
-				setScenario(std::make_unique<Bouncing>(), ScenarioType::BOUNCING);
-			}
-			if (ImGui::MenuItem("Colliding", nullptr, false, _scenarioType != ScenarioType::COLLIDING)) {
-				setScenario(std::make_unique<Colliding>(), ScenarioType::COLLIDING);
+			if (ImGui::MenuItem("Colliding", nullptr, false)) {
+				setScenario(std::make_unique<Colliding>());
 			}
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
 	}
 
-	if (_scenarioType != ScenarioType::SCENE_OPENING) {
+	ImGui::Begin("Colour Picker");
+
+	float colour[3] = { _bgColour.x, _bgColour.y, _bgColour.z };
+
+	ImGui::Text("Set background colour:");
+	if (ImGui::ColorEdit3("Colour", colour))
+	{
+		DirectX::XMFLOAT4 newColour = { colour[0], colour[1], colour[2], 1.0f };
+		{
+			_bgColour = newColour;
+		}
+	}
+
+
+	ImGui::End();
+
+	//if (_scenarioType != ScenarioType::SCENE_OPENING)
+	{
 		if (ImGui::BeginMainMenuBar()) {
 			if (ImGui::BeginMenu("Camera")) {
 				if (ImGui::MenuItem("Reset", nullptr, false, true)) {
@@ -342,14 +349,16 @@ void D3DFramework::render()
 		}
 	};
 
-	if (_scenarioType == ScenarioType::COLLIDING)
-	{
-		auto* collidingScene = dynamic_cast<Colliding*>(_scenario.get());
+	//if (_scenarioType == ScenarioType::COLLIDING)
+	
+		/*auto* collidingScene = dynamic_cast<Colliding*>(_scenario.get());
 		if (collidingScene)
 		{
 			collidingScene->renderObjects(_pImmediateContext);
-		}
-	}
+		}*/
+	if (_scenario)
+		_scenario->renderObjects(_pImmediateContext);
+	
 	_pImmediateContext->UpdateSubresource(_cameraConstantBuffer, 0, nullptr, &cbc, 0, 0);
 	_pImmediateContext->VSSetConstantBuffers(0, 1, &_cameraConstantBuffer.p); // register b0
 

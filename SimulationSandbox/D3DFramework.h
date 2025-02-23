@@ -4,7 +4,6 @@
 #include <atlbase.h>
 #include <fstream>
 
-#include "SceneOpening.h"
 #include "Bouncing.h"
 #include "Colliding.h"
 
@@ -66,7 +65,7 @@ struct Camera
 		float x = radius * sin(angle);
 		float z = radius * cos(angle);
 
-		eye = XMVectorSet(0.0f, -3.0f, z, 0.0f);
+		eye = XMVectorSet(x, -3.0f, z, 0.0f);
 		at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f); 
 		up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); 
 
@@ -122,7 +121,7 @@ class D3DFramework final {
 	XMMATRIX _View = {};
 	XMMATRIX _Projection = {};
 
-	XMFLOAT4 _bgColour = { 0.2f, 0.2f, 0.6f, 1.0f };
+	XMFLOAT4 _bgColour = { 0.54f, 0.75f, 0.77f, 1.0f };
 	static float time;
 	float deltaTime = 0.0f;
 	float deltaTimeFactor = 1.0f;
@@ -130,7 +129,6 @@ class D3DFramework final {
 	Camera _camera;
 
 	// scenario stuffs
-	ScenarioType _scenarioType = ScenarioType::SCENE_OPENING;
 	std::unique_ptr<Scenario> _scenario;
 
 	static std::unique_ptr<D3DFramework> _instance;
@@ -144,17 +142,6 @@ public:
 
 	D3DFramework()
 	{
-		_scenario = std::make_unique<SceneOpening>(); 
-		_scenarioType = _scenario->getScenarioType();
-		auto* openingScene = dynamic_cast<SceneOpening*>(_scenario.get());
-		if (openingScene)
-		{
-			openingScene->setBgColour(_bgColour);
-			openingScene->setOnColorChangeCallback([this](const DirectX::XMFLOAT4& colour) {
-				_bgColour = colour;
-				});
-			openingScene->onLoad();
-		}
 	}
 	D3DFramework(D3DFramework&) = delete;
 	D3DFramework(D3DFramework&&) = delete;
@@ -168,8 +155,6 @@ public:
 	// Windows expects this function to have a specific signature and does not pass an instance of the class to it
 	static LRESULT CALLBACK wndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	HRESULT initWindow(HINSTANCE hInstance, int nCmdShow);
-	// utility function that doesn't require an instance of the class
-	static HRESULT compileShaderFromFile(const WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut);
 	HRESULT initDevice();
 	void render();
 
@@ -177,23 +162,13 @@ public:
 	ID3D11Device* getDevice() const { return _pd3dDevice; }
 	ID3D11DeviceContext* getDeviceContext() const { return _pImmediateContext; }
 
-	void setScenario(std::unique_ptr<Scenario> scenario, ScenarioType scenarioType)
+	void setScenario(std::unique_ptr<Scenario> scenario)
 	{
-		if (_scenarioType == scenarioType) return;
-
-		_scenario.get()->onUnload();
+		if (_scenario)
+			_scenario.get()->onUnload();
 		_scenario = std::move(scenario);
-		_scenarioType = _scenario->getScenarioType();
 		_scenario.get()->onLoad();
-
-		if (_scenarioType == ScenarioType::COLLIDING)
-		{
-			auto* collidingScene = dynamic_cast<Colliding*>(_scenario.get());
-			if (collidingScene)
-			{
-				collidingScene->initObjects(_pd3dDevice, _pImmediateContext);
-			}
-		}
+		_scenario.get()->initObjects(_pd3dDevice, _pImmediateContext);
 	}
 
 	void setBackgroudColor(const XMFLOAT4& colour) { _bgColour = colour; }

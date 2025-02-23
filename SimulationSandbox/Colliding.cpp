@@ -12,15 +12,14 @@ void Colliding::onLoad()
     physicsObjects.push_back(std::move(plane));
 
     // Create two spheres
-    auto sphere1 = std::make_unique<PhysicsObject>(
+    auto sphere = std::make_unique<PhysicsObject>(
         DirectX::XMFLOAT3(-1.0f, 0.5f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
-    sphere1->LoadModel("sphere.sjg");
-    physicsObjects.push_back(std::move(sphere1));
-
-    /*auto sphere2 = std::make_unique<PhysicsObject>(
-        DirectX::XMFLOAT3(1.0f, 0.5f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
-    sphere2->LoadModel("sphere.sjg");
-    physicsObjects.push_back(std::move(sphere2));*/
+    sphere->LoadModel("sphere.sjg");
+	ConstantBuffer cb = sphere->getConstantBuffer();
+	cb.LightColour = { 0.2f, 0.6f, 0.2f, 1.0f };  // Green
+	cb.DarkColour = { 0.3f, 0.1f, 0.3f, 1.0f };  
+	sphere->setConstantBuffer(cb);
+    physicsObjects.push_back(std::move(sphere));
 }
 
 void Colliding::onUnload()
@@ -82,7 +81,7 @@ void Colliding::initObjects(ID3D11Device* device, ID3D11DeviceContext* context, 
         {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
             { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, sizeof(DirectX::XMFLOAT3), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, sizeof(DirectX::XMFLOAT4), D3D11_INPUT_PER_VERTEX_DATA, 0 }
+            { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, sizeof(DirectX::XMFLOAT3) + sizeof(DirectX::XMFLOAT4), D3D11_INPUT_PER_VERTEX_DATA, 0 }
         };
 
         CComPtr<ID3D11InputLayout> inputLayout;
@@ -169,15 +168,11 @@ void Colliding::renderObjects(ID3D11DeviceContext* context, float dt)
         // **Set index buffer**
         context->IASetIndexBuffer(indexBuffers[i], DXGI_FORMAT_R32_UINT, 0);
 
-        const ConstantBuffer cb{
-			DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&physicsObjects[i]->getTransformMatrix())),
-			{ 0.5f, 0.5f },
-			{ 0.6f, 0.2f, 0.2f, 1.0f },
-			{ 0.1f, 0.1f, 0.3f, 1.0f }
-        };
+		ConstantBuffer cb = physicsObjects[i]->getConstantBuffer();
 
         context->UpdateSubresource(constantBuffers[i].p, 0, nullptr, &cb, 0, 0);
         context->VSSetConstantBuffers(1, 1, &constantBuffers[i].p); // register b1
+		context->PSSetConstantBuffers(1, 1, &constantBuffers[i].p); // register b1
 
         // **Draw the object**
         context->DrawIndexed(indexCounts[i], 0, 0);

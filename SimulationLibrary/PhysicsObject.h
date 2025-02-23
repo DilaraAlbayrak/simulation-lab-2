@@ -1,6 +1,15 @@
 #pragma once
 #include "SJGLoader.h"
 
+struct ConstantBuffer
+{
+    DirectX::XMMATRIX World;
+    DirectX::XMFLOAT4 LightColour = { 0.8f, 0.8f, 0.8f, 1.0f };  // White
+    DirectX::XMFLOAT4 DarkColour = { 0.2f, 0.2f, 0.2f, 1.0f };  // Black
+    DirectX::XMFLOAT2 CheckerboardSize = { 1.0f, 1.0f }; // Adjust tile size
+	DirectX::XMFLOAT2 Padding = { 0.0f, 0.0f };
+};
+
 class PhysicsObject
 {
 private:
@@ -8,10 +17,10 @@ private:
     DirectX::XMFLOAT3 rotation;   // Rotation (pitch, yaw, roll)
     DirectX::XMFLOAT3 scale;      // Scale factors
 
-    DirectX::XMFLOAT4X4 transformMatrix; // World matrix
-
     std::vector<Vertex> vertices;
     std::vector<int> indices;
+
+	ConstantBuffer constantBuffer;
 
 public:
     PhysicsObject(DirectX::XMFLOAT3 startPos = {0.0f, 0.0f, 0.0f}, DirectX::XMFLOAT3 startRot = { 0.0f, 0.0f, 0.0f }, DirectX::XMFLOAT3 startScale = { 1.0f, 1.0f, 1.0f })
@@ -42,14 +51,16 @@ public:
         DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
 
         DirectX::XMMATRIX worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
-        DirectX::XMStoreFloat4x4(&transformMatrix, worldMatrix);
+		constantBuffer.World = DirectX::XMMatrixTranspose(worldMatrix);
     }
 
     const std::vector<Vertex>& getVertices() const { return vertices; }
     const std::vector<int>& getIndices() const { return indices; }
-    const DirectX::XMFLOAT4X4& getTransformMatrix() const { return transformMatrix; }
+    const DirectX::XMMATRIX& getTransformMatrix() const { return constantBuffer.World; }
+	const ConstantBuffer getConstantBuffer() const { return constantBuffer; }
 
     void setPosition(const DirectX::XMFLOAT3& newPos) { position = newPos; updateWorldMatrix(); }
     void setRotation(const DirectX::XMFLOAT3& newRot) { rotation = newRot; updateWorldMatrix(); }
     void setScale(const DirectX::XMFLOAT3& newScale) { scale = newScale; updateWorldMatrix(); }
+	void setConstantBuffer(const ConstantBuffer& cb) { constantBuffer = cb; }
 };

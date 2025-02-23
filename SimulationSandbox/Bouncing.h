@@ -15,10 +15,5 @@ public:
 
 	void initObjects(ID3D11Device* device, ID3D11DeviceContext* context, const std::wstring& shaderFile = L"Simulation.fx") override;
 	void renderObjects(ID3D11DeviceContext* context, float dt = 0.016) override;
-
-	ScenarioType getScenarioType() const override
-	{
-		return ScenarioType::BOUNCING;
-	}
 };
 
