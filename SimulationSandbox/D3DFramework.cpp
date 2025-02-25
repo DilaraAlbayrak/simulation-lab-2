@@ -249,6 +249,14 @@ void D3DFramework::renderImGui() {
 		ImGui::EndMainMenuBar();
 	}
 
+	ImGui::SetNextWindowPos(ImVec2(620, 550));
+	ImGui::SetNextWindowSize(ImVec2(180, 40));
+
+	ImGui::Begin("Statistics");
+	ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+	//ImGui::Text("#PlayerVertices: %d", _player->getVertexCount());
+	ImGui::End();
+
 	ImGui::Begin("Colour Picker");
 
 	float colour[3] = { _bgColour.x, _bgColour.y, _bgColour.z };
