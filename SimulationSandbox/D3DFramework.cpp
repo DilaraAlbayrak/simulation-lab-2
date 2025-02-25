@@ -214,7 +214,7 @@ HRESULT D3DFramework::initDevice()
 
 void D3DFramework::initCamera()
 {
-	_camera.eye = XMVectorSet(0.0f, -3.0f, 0.0f, 0.0f);
+	_camera.eye = XMVectorSet(0.0f, -3.0f, 3.0f, 0.0f);
 	_camera.at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	_camera.up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	_camera.zoom = 1.0f;
@@ -282,7 +282,7 @@ void D3DFramework::renderImGui() {
 		ImGui::SliderAngle("Rotation", &cameraAngle, 0.0f, 360.0f); 
 		ImGui::End();
 
-		_camera.rotateAroundOrigin(cameraAngle);
+		_camera.rotateUp(cameraAngle);
 	}
 
 	if (_scenario) {

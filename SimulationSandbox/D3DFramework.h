@@ -59,15 +59,15 @@ struct Camera
 		return "X: " + std::to_string(float3.x) + " Y: " + std::to_string(float3.y) + " Z: " + std::to_string(float3.z);
 	}
 
-	void rotateAroundOrigin(float angle) {
+	void rotateUp(float angle) {
 		float radius = 3.0f; 
 
 		float x = radius * sin(angle);
 		float z = radius * cos(angle);
 
-		eye = XMVectorSet(x, -3.0f, z, 0.0f);
+		eye = XMVectorSet(x, z, 3.0, 0.0f);
 		at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f); 
-		up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f); 
+		up = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f); 
 
 		/*OutputDebugStringA("--------------------\n");
 		OutputDebugStringA(XMVectorToString(eye).c_str());
@@ -84,16 +84,11 @@ struct Camera
 
 	void setOrthographicProjection()
 	{
-		eye = XMVectorSet(0.0f, 0.0f, 3.0f, 0.0f);
-		at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-		up = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-		zoom = 1.0f;
-		const float orthoWidth = 10.0f / zoom;
-		const float orthoHeight = (_windowHeight * 1.0f / _windowWidth) * orthoWidth;
+		const float orthoWidth = 10.0f / zoom;  // Adjust width based on zoom
+		const float orthoHeight = (600.0f / 800.0f) * orthoWidth; // Maintain aspect ratio
 
 		projection = XMMatrixOrthographicLH(orthoWidth, orthoHeight, 0.01f, 1000.0f);
-
-		view = XMMatrixLookAtLH(eye, at, up);
+		view = XMMatrixLookAtLH(eye, at, XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
 	}
 };
 

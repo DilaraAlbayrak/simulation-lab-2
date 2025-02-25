@@ -1,19 +1,19 @@
 #include "Colliding.h"
 #include <atlbase.h>
+#include "Sphere.h"
+#include "Plane.h"
 
 void Colliding::onLoad()
 {
     OutputDebugString(L">>>>>>>>>> Colliding::onLoad\n");
 
     // Create a plane
-    auto plane = std::make_unique<PhysicsObject>(
-        DirectX::XMFLOAT3(0.0f, -1.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+    auto plane = std::make_unique<PhysicsObject>(std::make_unique<Plane>(), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
     plane->LoadModel("plane.sjg");
     physicsObjects.push_back(std::move(plane));
 
     // Create two spheres
-    auto sphere = std::make_unique<PhysicsObject>(
-        DirectX::XMFLOAT3(-1.0f, 0.5f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+    auto sphere = std::make_unique<PhysicsObject>(std::make_unique<Sphere>(), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
     sphere->LoadModel("sphere.sjg");
 	ConstantBuffer cb = sphere->getConstantBuffer();
 	cb.LightColour = { 0.2f, 0.6f, 0.2f, 1.0f };  // Green
