@@ -4,8 +4,7 @@
 #include <atlbase.h>
 #include <fstream>
 
-#include "Bouncing.h"
-#include "Colliding.h"
+#include "Scenario.h"
 
 using namespace DirectX;
 
@@ -117,9 +116,14 @@ class D3DFramework final {
 	XMMATRIX _Projection = {};
 
 	XMFLOAT4 _bgColour = { 0.54f, 0.75f, 0.77f, 1.0f };
-	static float time;
 	float deltaTime = 0.0f;
 	float deltaTimeFactor = 1.0f;
+	static float time;
+	const float fixedTimesteps[4] = { 0.002f, 0.004f, 0.008f, 0.016f };
+	float fixedTimestep = fixedTimesteps[1];
+	const float maxSteps[4] = { 8, 4, 2, 1 };
+	int numMaxStep = maxSteps[1];
+	float cumulativeTime = 0.0f;
 
 	Camera _camera;
 
@@ -135,9 +139,7 @@ class D3DFramework final {
 
 public:
 
-	D3DFramework()
-	{
-	}
+	D3DFramework() = default;
 	D3DFramework(D3DFramework&) = delete;
 	D3DFramework(D3DFramework&&) = delete;
 	D3DFramework operator=(const D3DFramework&) = delete;
@@ -163,7 +165,6 @@ public:
 			_scenario.get()->onUnload();
 		_scenario = std::move(scenario);
 		_scenario.get()->onLoad();
-		_scenario.get()->initObjects(_pd3dDevice, _pImmediateContext);
 	}
 
 	void setBackgroudColor(const XMFLOAT4& colour) { _bgColour = colour; }

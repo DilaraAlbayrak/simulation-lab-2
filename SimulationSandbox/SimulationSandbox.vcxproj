@@ -183,6 +183,7 @@
     <ClInclude Include="Bouncing.h" />
     <ClInclude Include="Colliding.h" />
     <ClInclude Include="D3DFramework.h" />
+    <ClInclude Include="Moving.h" />
     <ClInclude Include="NotImplementedException .h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Scenario.h" />
@@ -209,6 +210,7 @@
     <ClCompile Include="ImGui\imgui_draw.cpp" />
     <ClCompile Include="ImGui\imgui_tables.cpp" />
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="Moving.cpp" />
     <ClCompile Include="Scenario.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="Simulation.cpp" />

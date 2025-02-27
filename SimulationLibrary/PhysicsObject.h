@@ -12,6 +12,12 @@ struct ConstantBuffer
 	DirectX::XMFLOAT2 Padding = { 0.0f, 0.0f };
 };
 
+enum IntegrationMethod
+{
+	SEMI_IMPLICIT_EULER,
+	VERLET
+};
+
 class PhysicsObject
 {
 private:
@@ -28,10 +34,15 @@ private:
 
 	// physics-related data
     DirectX::XMFLOAT3 velocity = { 0.0f, 0.0f, 0.0f };
+	DirectX::XMFLOAT3 angularVelocity = { 0.0f, 0.0f, 0.0f };
     DirectX::XMFLOAT3 acceleration = { 0.0f, 0.0f, 0.0f }; 
     float mass = 1.0f;
     float inverseMass = 1.0f; 
+	bool isStatic = false;
+	bool applyGravity = !isStatic;
     std::vector<DirectX::XMFLOAT3> forces;
+
+	IntegrationMethod integrationMethod = SEMI_IMPLICIT_EULER;
 
     void updateWorldMatrix()
     {
@@ -44,14 +55,19 @@ private:
         constantBuffer.World = DirectX::XMMatrixTranspose(worldMatrix);
     }
 
-	void applyForce(const DirectX::XMFLOAT3& force)
+	void updateSemiImplicitEuler(float dt);
+    void updateVerlet(float dt);
+
+	void updateRotation(float dt)
 	{
-		forces.push_back(force);
+		rotation.x += angularVelocity.x * dt;
+		rotation.y += angularVelocity.y * dt;
+		rotation.z += angularVelocity.z * dt;
 	}
 
 public:
-    PhysicsObject(std::unique_ptr<Collider> col, DirectX::XMFLOAT3 startPos = {0.0f, 0.0f, 0.0f})
-        : collider(std::move(col)), position(startPos)
+    PhysicsObject(std::unique_ptr<Collider> col, DirectX::XMFLOAT3 startPos = {0.0f, 0.0f, 0.0f}, bool fixed = false)
+		: collider(std::move(col)), position(startPos), isStatic(fixed)
     {
         inverseMass = (mass != 0.0f) ? 1.0f / mass : 0.0f;
         updateWorldMatrix();
@@ -64,11 +80,25 @@ public:
 
     void Update(float deltaTime)
     {
-        position.x += deltaTime;
-        position.y += deltaTime;
-        position.z += deltaTime;
+		if (isStatic) return;
+
+		if (integrationMethod == SEMI_IMPLICIT_EULER)
+		{
+			updateSemiImplicitEuler(deltaTime);
+		}
+		else if (integrationMethod == VERLET)
+		{
+			updateVerlet(deltaTime);
+		}
+
+		updateRotation(deltaTime);
 
         updateWorldMatrix();
+    }
+
+    void applyForce(const DirectX::XMFLOAT3& force)
+    {
+        forces.push_back(force);
     }
 
     const Collider& getCollider() const { return *collider; }
@@ -76,9 +106,13 @@ public:
     const std::vector<int>& getIndices() const { return indices; }
     const DirectX::XMMATRIX& getTransformMatrix() const { return constantBuffer.World; }
 	const ConstantBuffer getConstantBuffer() const { return constantBuffer; }
+	const bool getStaticInfo() const { return isStatic; }
 
     void setPosition(const DirectX::XMFLOAT3& newPos) { position = newPos; updateWorldMatrix(); }
     void setRotation(const DirectX::XMFLOAT3& newRot) { rotation = newRot; updateWorldMatrix(); }
     void setScale(const DirectX::XMFLOAT3& newScale) { scale = newScale; updateWorldMatrix(); }
+	void setVelocity(const DirectX::XMFLOAT3& newVel) { velocity = newVel; }
+	void setAngularVelocity(const DirectX::XMFLOAT3& newAngVel) { angularVelocity = newAngVel; }
 	void setConstantBuffer(const ConstantBuffer& cb) { constantBuffer = cb; }
+	void setIntegrationMethod(int method) { integrationMethod = static_cast<IntegrationMethod>(method); }
 };

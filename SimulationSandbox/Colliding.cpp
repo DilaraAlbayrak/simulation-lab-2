@@ -8,9 +8,9 @@ void Colliding::onLoad()
     OutputDebugString(L">>>>>>>>>> Colliding::onLoad\n");
 
     // Create a plane
-    auto plane = std::make_unique<PhysicsObject>(std::make_unique<Plane>(), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+    auto plane = std::make_unique<PhysicsObject>(std::make_unique<Plane>(), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), true);
     plane->LoadModel("plane.sjg");
-    physicsObjects.push_back(std::move(plane));
+	addPhysicsObject(std::move(plane));
 
     // Create two spheres
     auto sphere = std::make_unique<PhysicsObject>(std::make_unique<Sphere>(), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
@@ -19,166 +19,32 @@ void Colliding::onLoad()
 	cb.LightColour = { 0.2f, 0.6f, 0.2f, 1.0f };  // Green
 	cb.DarkColour = { 0.3f, 0.1f, 0.3f, 1.0f };  
 	sphere->setConstantBuffer(cb);
-    physicsObjects.push_back(std::move(sphere));
+	addPhysicsObject(std::move(sphere));
+
+	initObjects();
 }
 
 void Colliding::onUnload()
 {
     OutputDebugString(L">>>>>>>>>> Colliding::onUnload\n");
-    physicsObjects.clear();
-    vertexBuffers.clear();
-    indexBuffers.clear();
-    indexCounts.clear();
+
+	unloadScenario();
 }
 
 void Colliding::onUpdate(float dt)
 {
-}
-
-void Colliding::initObjects(ID3D11Device* device, ID3D11DeviceContext* context, const std::wstring& shaderFile)
-{
-    vertexBuffers.clear();
-    indexBuffers.clear();
-    inputLayouts.clear();
-    indexCounts.clear();
-
-    // **Compile the vertex shader for this scene**
-    HRESULT hr = ShaderManager::getInstance(device)->compileShaderFromFile(shaderFile.c_str(), "VS", "vs_5_0", &vertexShaderBlob);
-    // **Create the Vertex Shader**
-    hr = device->CreateVertexShader(
-        vertexShaderBlob->GetBufferPointer(),
-        vertexShaderBlob->GetBufferSize(),
-        nullptr, &vertexShader);
-
-    if (FAILED(hr))
-    {
-        OutputDebugString(L"Failed to create vertex shader\n");
-        return;
-    }
-
-    hr = ShaderManager::getInstance(device)->compileShaderFromFile(shaderFile.c_str(), "PS", "ps_5_0", &pixelShaderBlob);
-    // **Create the Pixel Shader**
-    hr = device->CreatePixelShader(
-        pixelShaderBlob->GetBufferPointer(),
-        pixelShaderBlob->GetBufferSize(),
-        nullptr, &pixelShader);
-
-    if (FAILED(hr))
-    {
-        OutputDebugString(L"Failed to create pixel shader\n");
-        return;
-    }
-
-    for (auto& obj : physicsObjects)
-    {
-        const std::vector<Vertex>& vertices = obj->getVertices();
-        const std::vector<int>& indices = obj->getIndices();
-
-        if (vertices.empty() || indices.empty()) continue;
-
-        // **Define input layout for this object**
-        D3D11_INPUT_ELEMENT_DESC layout[] =
-        {
-            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, sizeof(DirectX::XMFLOAT3), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, sizeof(DirectX::XMFLOAT3) + sizeof(DirectX::XMFLOAT4), D3D11_INPUT_PER_VERTEX_DATA, 0 }
-        };
-
-        CComPtr<ID3D11InputLayout> inputLayout;
-        hr = device->CreateInputLayout(
-            layout, ARRAYSIZE(layout),
-            vertexShaderBlob->GetBufferPointer(),
-            vertexShaderBlob->GetBufferSize(),
-            &inputLayout
-        );
-
-        if (FAILED(hr))
-        {
-            OutputDebugString(L"Failed to create input layout\n");
-            continue;
-        }
-
-        inputLayouts.push_back(inputLayout);
-
-        // **Create vertex buffer**
-        D3D11_BUFFER_DESC vertexBufferDesc = {};
-        vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-        vertexBufferDesc.ByteWidth = static_cast<UINT>(sizeof(Vertex) * vertices.size());
-        vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-
-        D3D11_SUBRESOURCE_DATA vertexInitData = {};
-        vertexInitData.pSysMem = vertices.data();
-
-        CComPtr<ID3D11Buffer> vertexBuffer;
-        hr = device->CreateBuffer(&vertexBufferDesc, &vertexInitData, &vertexBuffer);
-        if (FAILED(hr)) continue;
-
-        vertexBuffers.push_back(vertexBuffer);
-
-        // **Create index buffer**
-        D3D11_BUFFER_DESC indexBufferDesc = {};
-        indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-        indexBufferDesc.ByteWidth = static_cast<UINT>(sizeof(int) * indices.size());
-        indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-
-        D3D11_SUBRESOURCE_DATA indexInitData = {};
-        indexInitData.pSysMem = indices.data();
-
-        CComPtr<ID3D11Buffer> indexBuffer;
-        hr = device->CreateBuffer(&indexBufferDesc, &indexInitData, &indexBuffer);
-        if (FAILED(hr)) continue;
-
-        indexBuffers.push_back(indexBuffer);
-        indexCounts.push_back(static_cast<UINT>(indices.size()));
-
-        D3D11_BUFFER_DESC cbDesc = {};
-        cbDesc.Usage = D3D11_USAGE_DEFAULT;
-        cbDesc.ByteWidth = sizeof(ConstantBuffer);
-        cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		CComPtr <ID3D11Buffer> constantBuffer;
-        device->CreateBuffer(&cbDesc, nullptr, &constantBuffer);
-		constantBuffers.push_back(constantBuffer);
-
-        // Set primitive topology
-        context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    }
-}
-
-void Colliding::renderObjects(ID3D11DeviceContext* context, float dt)
-{
-    if (!vertexShader || !pixelShader) return;  // Ensure shaders are valid
-
-    for (size_t i = 0; i < physicsObjects.size(); ++i)
-    {
-        if (!vertexBuffers[i] || !indexBuffers[i] || !inputLayouts[i]) continue;
-
-        // **Set shaders before drawing**
-        context->VSSetShader(vertexShader.p, nullptr, 0);
-        context->PSSetShader(pixelShader.p, nullptr, 0);
-
-        // **Set the input layout**
-        context->IASetInputLayout(inputLayouts[i]);
-
-        // **Set vertex buffer**
-        UINT stride = sizeof(Vertex);
-        UINT offset = 0;
-        ID3D11Buffer* vBuffer = vertexBuffers[i].p;
-        context->IASetVertexBuffers(0, 1, &vBuffer, &stride, &offset);
-
-        // **Set index buffer**
-        context->IASetIndexBuffer(indexBuffers[i], DXGI_FORMAT_R32_UINT, 0);
-
-		ConstantBuffer cb = physicsObjects[i]->getConstantBuffer();
-
-        context->UpdateSubresource(constantBuffers[i].p, 0, nullptr, &cb, 0, 0);
-        context->VSSetConstantBuffers(1, 1, &constantBuffers[i].p); // register b1
-		context->PSSetConstantBuffers(1, 1, &constantBuffers[i].p); // register b1
-
-        // **Draw the object**
-        context->DrawIndexed(indexCounts[i], 0, 0);
-    }
+	for (auto& obj : getPhysicsObjects())
+	{
+		if (obj->getStaticInfo()) continue;
+		// Update physics
+		DirectX::XMFLOAT3 force = { 0.0f, -9.8f, 0.0f };  // Gravity
+		//obj->applyForce(force);
+		// Update object
+		//obj->Update(dt);
+	}
 }
 
 void Colliding::ImGuiMainMenu()
 {
+	applySharedGUI();
 }

@@ -5,6 +5,10 @@
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
 
+#include "Bouncing.h"
+#include "Colliding.h"
+#include "Moving.h"
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 std::unique_ptr<D3DFramework> D3DFramework::_instance = std::make_unique<D3DFramework>();
@@ -238,65 +242,79 @@ void D3DFramework::renderImGui() {
 	if (ImGui::BeginMainMenuBar()) {
 		if (ImGui::BeginMenu("Scenario"))
 		{
-			if (ImGui::MenuItem("Bouncing", nullptr, false)) {
-				setScenario(std::make_unique<Bouncing>());
+			if (ImGui::MenuItem("Lab3 Q1 - Move w/o Force", nullptr, false)) {
+				setScenario(std::make_unique<Moving>(_pd3dDevice, _pImmediateContext));
 			}
-			if (ImGui::MenuItem("Colliding", nullptr, false)) {
-				setScenario(std::make_unique<Colliding>());
+			if (ImGui::MenuItem("Lab3 Q2 - Apply Gravity", nullptr, false)) {
+				setScenario(std::make_unique<Colliding>(_pd3dDevice, _pImmediateContext));
+			}
+			if (ImGui::MenuItem("Lab3 Q3a - Colliding", nullptr, false)) {
+				setScenario(std::make_unique<Colliding>(_pd3dDevice, _pImmediateContext));
+			}
+			if (ImGui::MenuItem("Lab3 Q3b - Bouncing", nullptr, false)) {
+				setScenario(std::make_unique<Bouncing>(_pd3dDevice, _pImmediateContext));
 			}
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
 	}
 
-	ImGui::SetNextWindowPos(ImVec2(620, 550));
-	ImGui::SetNextWindowSize(ImVec2(180, 40));
-
-	ImGui::Begin("Statistics");
-	ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
-	//ImGui::Text("#PlayerVertices: %d", _player->getVertexCount());
-	ImGui::End();
-
-	ImGui::Begin("Colour Picker");
-
-	float colour[3] = { _bgColour.x, _bgColour.y, _bgColour.z };
-
-	ImGui::Text("Set background colour:");
-	if (ImGui::ColorEdit3("Colour", colour))
+	if (_scenario)
 	{
-		DirectX::XMFLOAT4 newColour = { colour[0], colour[1], colour[2], 1.0f };
-		{
-			_bgColour = newColour;
-		}
-	}
+		ImGui::Begin("Statistics");
+		ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+		ImGui::Text("dt: %.4f", deltaTime);
+		ImGui::End();
 
-
-	ImGui::End();
-
-	//if (_scenarioType != ScenarioType::SCENE_OPENING)
-	{
+		static float cameraAngle = 0.0f;
 		if (ImGui::BeginMainMenuBar()) {
 			if (ImGui::BeginMenu("Camera")) {
 				if (ImGui::MenuItem("Reset", nullptr, false, true)) {
 					initCamera();
+					cameraAngle = 0.0f;
 				}
 				ImGui::EndMenu();
 			}
 			ImGui::EndMainMenuBar();
 		}
 
-		static float cameraAngle = 0.0f; 
-		ImGui::Begin("Camera Controls");
-		ImGui::SliderAngle("Rotation", &cameraAngle, 0.0f, 360.0f); 
+		static int selectedTimestepIndex = 1;
+
+		ImGui::Begin("Scene Controls");
+		ImGui::PushItemWidth(100);
+		ImGui::SliderAngle("Camera rotation", &cameraAngle, 0.0f, 360.0f);
+		if (ImGui::SliderInt("Fixed timestep:", &selectedTimestepIndex, 0, 3, ""))
+		{
+			// Ensure the index stays within the range of the array
+			selectedTimestepIndex = (selectedTimestepIndex < 0) ? 0 : (selectedTimestepIndex > 3) ? 3 : selectedTimestepIndex;
+			fixedTimestep = fixedTimesteps[selectedTimestepIndex];
+			numMaxStep = maxSteps[selectedTimestepIndex];
+		}
+		ImGui::SameLine();
+		ImGui::Text("%.3f", fixedTimestep);
+		ImGui::PopItemWidth();
 		ImGui::End();
-
 		_camera.rotateUp(cameraAngle);
-	}
 
-	if (_scenario) {
 		_scenario->ImGuiMainMenu();
 	}
+	else
+	{
+		ImGui::Begin("Colour Picker");
 
+		float colour[3] = { _bgColour.x, _bgColour.y, _bgColour.z };
+
+		ImGui::Text("Set background colour:");
+		if (ImGui::ColorEdit3("Colour", colour))
+		{
+			DirectX::XMFLOAT4 newColour = { colour[0], colour[1], colour[2], 1.0f };
+			{
+				_bgColour = newColour;
+			}
+		}
+		ImGui::End();
+	}
+	
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
@@ -357,15 +375,20 @@ void D3DFramework::render()
 		}
 	};
 
-	//if (_scenarioType == ScenarioType::COLLIDING)
-	
-		/*auto* collidingScene = dynamic_cast<Colliding*>(_scenario.get());
-		if (collidingScene)
-		{
-			collidingScene->renderObjects(_pImmediateContext);
-		}*/
 	if (_scenario)
-		_scenario->renderObjects(_pImmediateContext);
+	{
+		cumulativeTime += deltaTime;
+		int physicsSteps = 0;
+
+		while (cumulativeTime >= fixedTimestep && physicsSteps <= numMaxStep)
+		{
+			_scenario->onUpdate(fixedTimestep);
+			cumulativeTime -= fixedTimestep;
+			++physicsSteps;
+		}
+
+		_scenario->renderObjects();
+	}
 	
 	_pImmediateContext->UpdateSubresource(_cameraConstantBuffer, 0, nullptr, &cbc, 0, 0);
 	_pImmediateContext->VSSetConstantBuffers(0, 1, &_cameraConstantBuffer.p); // register b0
