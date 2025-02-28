@@ -144,6 +144,20 @@ void Scenario::updateMovement(float dt)
 
         obj->setIntegrationMethod(getIntegrationMethod());
 
+		if (obj->getColidingInfo())
+		{
+			for (auto& other : physicsObjects)
+			{
+				if (obj == other || !other->getColidingInfo()) continue;
+				if (obj->checkCollision(*other))
+				{
+					obj->setVelocity({ 0.0f, 0.0f, 0.0f });
+					obj->setAngularVelocity({ 0.0f, 0.0f, 0.0f });
+					break;
+				}
+			}
+		}
+
         obj->Update(dt);
     }
 }

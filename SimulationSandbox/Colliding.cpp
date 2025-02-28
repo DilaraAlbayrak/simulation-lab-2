@@ -29,6 +29,7 @@ void Colliding::onLoad()
 	auto stationarySphere = std::make_unique<PhysicsObject>(std::make_unique<Sphere>(0.5f), DirectX::XMFLOAT3(3.5f, -2.5f, 0.0f), true);
 	stationarySphere->LoadModel("sphere.sjg");
 	stationarySphere->setScale({ 0.5f, 0.5f, 0.5f });
+	stationarySphere->setColliding(true);
 	cb = stationarySphere->getConstantBuffer();
 	cb.LightColour = { 0.3f, 0.1f, 0.3f, 1.0f };  
 	cb.DarkColour = { 0.3f, 0.1f, 0.3f, 1.0f };

@@ -3,14 +3,16 @@
 
 bool Sphere::isColliding(const Collider& other, const DirectX::XMFLOAT3& thisPos, const DirectX::XMFLOAT3& otherPos) const
 {
-	return other.isCollidingWithSphere(thisPos, _radius);
+	return other.isCollidingWithSphere(thisPos, otherPos, _radius);
 }
 
-bool Sphere::isCollidingWithSphere(const DirectX::XMFLOAT3& spherePos, float radius) const
+bool Sphere::isCollidingWithSphere(const DirectX::XMFLOAT3& spherePos, const DirectX::XMFLOAT3& otherPos, float radius) const
 {
-    float distance = sqrt(pow(spherePos.x - spherePos.x, 2) +
-        pow(spherePos.y - spherePos.y, 2) +
-        pow(spherePos.z - spherePos.z, 2));
+    float dx = otherPos.x - spherePos.x;
+    float dy = otherPos.y - spherePos.y;
+    float dz = otherPos.z - spherePos.z;
+
+    float distance = sqrt(dx * dx + dy * dy + dz * dz);
 
     return distance <= (_radius + radius);
 }

@@ -6,7 +6,7 @@ bool Plane::isColliding(const Collider& other, const DirectX::XMFLOAT3& myPos, c
     return other.isCollidingWithPlane(myPos, _normal);
 }
 
-bool Plane::isCollidingWithSphere(const DirectX::XMFLOAT3& spherePos, float radius) const 
+bool Plane::isCollidingWithSphere(const DirectX::XMFLOAT3& spherePos, const DirectX::XMFLOAT3& otherPos, float radius)  const
 {
     float distance = fabs(_normal.x * spherePos.x +
         _normal.y * spherePos.y +

@@ -11,7 +11,7 @@ public:
 
 	bool isColliding(const Collider& other, const DirectX::XMFLOAT3& thisPos, const DirectX::XMFLOAT3& otherPos) const override;
 
-	bool isCollidingWithSphere(const DirectX::XMFLOAT3& spherePos, float radius) const override;
+	bool isCollidingWithSphere(const DirectX::XMFLOAT3& spherePos, const DirectX::XMFLOAT3& otherPos, float radius)const override;
 	bool isCollidingWithPlane(const DirectX::XMFLOAT3& planePos, const DirectX::XMFLOAT3& planeNormal) const override;
 };
 

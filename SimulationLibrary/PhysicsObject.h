@@ -79,6 +79,7 @@ public:
     {
         inverseMass = (mass != 0.0f) ? 1.0f / mass : 0.0f;
         gravitationalForce = { 0.0f, 0.0f, -9.81f * mass };
+		colliding = false;
         updateWorldMatrix();
     }
 
