@@ -8,6 +8,7 @@
 #include "Bouncing.h"
 #include "Colliding.h"
 #include "Moving.h"
+#include "Falling.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -63,7 +64,7 @@ HRESULT D3DFramework::initWindow(HINSTANCE hInstance, int nCmdShow) {
 
 	// Create window
 	_hInst = hInstance;
-	RECT rc = { 0, 0, 800, 600 };
+	RECT rc = { 0, 0, _windowWidth, _windowHeight };
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
 	_hWnd = CreateWindow(L"Starter Template", L"Simulation Sandbox",
 		WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
@@ -246,7 +247,7 @@ void D3DFramework::renderImGui() {
 				setScenario(std::make_unique<Moving>(_pd3dDevice, _pImmediateContext));
 			}
 			if (ImGui::MenuItem("Lab3 Q2 - Apply Gravity", nullptr, false)) {
-				setScenario(std::make_unique<Colliding>(_pd3dDevice, _pImmediateContext));
+				setScenario(std::make_unique<Falling>(_pd3dDevice, _pImmediateContext));
 			}
 			if (ImGui::MenuItem("Lab3 Q3a - Colliding", nullptr, false)) {
 				setScenario(std::make_unique<Colliding>(_pd3dDevice, _pImmediateContext));
@@ -278,16 +279,23 @@ void D3DFramework::renderImGui() {
 			ImGui::EndMainMenuBar();
 		}
 
+		static int selectedTimeCoefIndex = 2;
 		static int selectedTimestepIndex = 1;
 
 		ImGui::Begin("Scene Controls");
 		ImGui::PushItemWidth(100);
 		ImGui::SliderAngle("Camera rotation", &cameraAngle, 0.0f, 360.0f);
+		if (ImGui::SliderInt("Time coefficient:", &selectedTimeCoefIndex, 0, 3, ""))
+		{
+			// Ensure the index stays within the range of the array
+			selectedTimeCoefIndex = (selectedTimeCoefIndex < 0) ? 0 : (selectedTimeCoefIndex > 3) ? 3 : selectedTimeCoefIndex;
+			deltaTimeFactor = deltaTimeFactors[selectedTimeCoefIndex];
+		}
 		if (ImGui::SliderInt("Fixed timestep:", &selectedTimestepIndex, 0, 3, ""))
 		{
 			// Ensure the index stays within the range of the array
 			selectedTimestepIndex = (selectedTimestepIndex < 0) ? 0 : (selectedTimestepIndex > 3) ? 3 : selectedTimestepIndex;
-			fixedTimestep = fixedTimesteps[selectedTimestepIndex];
+			fixedTimestep = fixedTimesteps[selectedTimestepIndex] * deltaTimeFactor;
 			numMaxStep = maxSteps[selectedTimestepIndex];
 		}
 		ImGui::SameLine();

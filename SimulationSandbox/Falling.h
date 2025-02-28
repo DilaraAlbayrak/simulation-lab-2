@@ -1,11 +1,11 @@
 #pragma once
 #include "Scenario.h"
 
-class Moving : public Scenario
+class Falling : public Scenario
 {
 public:
-	Moving(const CComPtr <ID3D11Device>& pDevice, const CComPtr <ID3D11DeviceContext>& pContext) : Scenario(pDevice, pContext) {}
-	~Moving() = default;
+	Falling(const CComPtr <ID3D11Device>& pDevice, const CComPtr <ID3D11DeviceContext>& pContext) : Scenario(pDevice, pContext) {}
+	~Falling() = default;
 
 	void onLoad() override;
 	void onUnload() override;

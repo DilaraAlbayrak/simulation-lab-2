@@ -15,7 +15,7 @@ struct ConstantBuffer
 enum IntegrationMethod
 {
 	SEMI_IMPLICIT_EULER,
-	VERLET
+	RK4
 };
 
 class PhysicsObject
@@ -33,6 +33,7 @@ private:
 	ConstantBuffer constantBuffer;
 
 	// physics-related data
+	DirectX::XMFLOAT3 previousPosition = { 0.0f, 0.0f, 0.0f };
     DirectX::XMFLOAT3 velocity = { 0.0f, 0.0f, 0.0f };
 	DirectX::XMFLOAT3 angularVelocity = { 0.0f, 0.0f, 0.0f };
     DirectX::XMFLOAT3 acceleration = { 0.0f, 0.0f, 0.0f }; 
@@ -40,7 +41,9 @@ private:
     float inverseMass = 1.0f; 
 	bool isStatic = false;
 	bool applyGravity = !isStatic;
+	bool colliding = false;
     std::vector<DirectX::XMFLOAT3> forces;
+	DirectX::XMFLOAT3 gravitationalForce = { 0.0f, 0.0f, -9.81f };
 
 	IntegrationMethod integrationMethod = SEMI_IMPLICIT_EULER;
 
@@ -55,8 +58,8 @@ private:
         constantBuffer.World = DirectX::XMMatrixTranspose(worldMatrix);
     }
 
-	void updateSemiImplicitEuler(float dt);
-    void updateVerlet(float dt);
+	void moveSemiImplicitEuler(float dt);
+	void moveRK4(float dt);
 
 	void updateRotation(float dt)
 	{
@@ -65,13 +68,26 @@ private:
 		rotation.z += angularVelocity.z * dt;
 	}
 
+    void applyGravitationalForce()
+    {
+        if (isStatic || !applyGravity) return;
+    }
+
 public:
     PhysicsObject(std::unique_ptr<Collider> col, DirectX::XMFLOAT3 startPos = {0.0f, 0.0f, 0.0f}, bool fixed = false)
 		: collider(std::move(col)), position(startPos), isStatic(fixed)
     {
         inverseMass = (mass != 0.0f) ? 1.0f / mass : 0.0f;
+        gravitationalForce = { 0.0f, 0.0f, -9.81f * mass };
         updateWorldMatrix();
     }
+
+	bool checkCollision(const PhysicsObject& other) const
+	{
+		if (!collider || !other.collider) return false;
+
+		return collider->isColliding(*other.collider, position, other.position);
+	}
 
     bool LoadModel(const std::string& filename)
     {
@@ -82,13 +98,20 @@ public:
     {
 		if (isStatic) return;
 
+		if (applyGravity)
+		{
+            acceleration = { gravitationalForce.x * inverseMass,
+                             gravitationalForce.y * inverseMass,
+                             gravitationalForce.z * inverseMass };
+		}
+
 		if (integrationMethod == SEMI_IMPLICIT_EULER)
 		{
-			updateSemiImplicitEuler(deltaTime);
+            moveSemiImplicitEuler(deltaTime);
 		}
-		else if (integrationMethod == VERLET)
+		else if (integrationMethod == RK4)
 		{
-			updateVerlet(deltaTime);
+			moveRK4(deltaTime);
 		}
 
 		updateRotation(deltaTime);
@@ -107,6 +130,7 @@ public:
     const DirectX::XMMATRIX& getTransformMatrix() const { return constantBuffer.World; }
 	const ConstantBuffer getConstantBuffer() const { return constantBuffer; }
 	const bool getStaticInfo() const { return isStatic; }
+	const bool getColidingInfo() const { return colliding; }
 
     void setPosition(const DirectX::XMFLOAT3& newPos) { position = newPos; updateWorldMatrix(); }
     void setRotation(const DirectX::XMFLOAT3& newRot) { rotation = newRot; updateWorldMatrix(); }
@@ -115,4 +139,6 @@ public:
 	void setAngularVelocity(const DirectX::XMFLOAT3& newAngVel) { angularVelocity = newAngVel; }
 	void setConstantBuffer(const ConstantBuffer& cb) { constantBuffer = cb; }
 	void setIntegrationMethod(int method) { integrationMethod = static_cast<IntegrationMethod>(method); }
+	void setGravity(bool gravity) { applyGravity = gravity; }
+	void setColliding(bool collide) { colliding = collide; }
 };

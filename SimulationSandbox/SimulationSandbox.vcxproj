@@ -183,6 +183,7 @@
     <ClInclude Include="Bouncing.h" />
     <ClInclude Include="Colliding.h" />
     <ClInclude Include="D3DFramework.h" />
+    <ClInclude Include="Falling.h" />
     <ClInclude Include="Moving.h" />
     <ClInclude Include="NotImplementedException .h" />
     <ClInclude Include="Resource.h" />
@@ -193,6 +194,7 @@
     <ClCompile Include="Bouncing.cpp" />
     <ClCompile Include="Colliding.cpp" />
     <ClCompile Include="D3DFramework.cpp" />
+    <ClCompile Include="Falling.cpp" />
     <ClCompile Include="ImGui\backends\imgui_impl_dx11.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>

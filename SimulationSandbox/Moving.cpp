@@ -2,6 +2,7 @@
 #include <atlbase.h>
 #include "Sphere.h"
 #include "Plane.h"
+#include <memory>
 
 void Moving::onLoad()
 {
@@ -15,6 +16,9 @@ void Moving::onLoad()
 	// Create a sphere
 	auto sphere = std::make_unique<PhysicsObject>(std::make_unique<Sphere>(), DirectX::XMFLOAT3(-2.5f, -2.5f, 0.0f));
 	sphere->LoadModel("sphere.sjg");
+	sphere->setVelocity({ 1.0f, 1.0f, 0.0f });
+	sphere->setAngularVelocity({ 1.0f, 1.0f, 0.0f });
+	sphere->setGravity(false);
 	ConstantBuffer cb = sphere->getConstantBuffer();
 	cb.LightColour = { 0.2f, 0.6f, 0.2f, 1.0f };  // Green
 	cb.DarkColour = { 0.3f, 0.1f, 0.3f, 1.0f };
@@ -33,16 +37,7 @@ void Moving::onUnload()
 
 void Moving::onUpdate(float dt)
 {
-	for (auto& obj : getPhysicsObjects())
-	{
-		if (obj->getStaticInfo()) continue;
-		
-		obj->setVelocity({ 1.0f, 1.0f, 0.0f });
-		obj->setAngularVelocity({ 1.0f, 1.0f, 0.0f });
-		obj->setIntegrationMethod(getIntegrationMethod());
-
-		obj->Update(dt);
-	}
+	updateMovement(dt);
 }
 
 void Moving::ImGuiMainMenu()

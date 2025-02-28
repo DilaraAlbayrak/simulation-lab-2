@@ -5,7 +5,6 @@
 class Colliding : public Scenario
 {
 public:
-	//Colliding(const CComPtr <ID3D11Device> &pDevice, const CComPtr <ID3D11DeviceContext> &pContext) : device(pDevice), context(pContext) {}
 	Colliding(const CComPtr <ID3D11Device>& pDevice, const CComPtr <ID3D11DeviceContext>& pContext) : Scenario(pDevice, pContext) {}
 	~Colliding() = default;
 

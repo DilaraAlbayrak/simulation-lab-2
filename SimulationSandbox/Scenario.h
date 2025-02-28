@@ -19,7 +19,7 @@ private:
 	CComPtr<ID3DBlob> pixelShaderBlob;
 	std::vector<UINT> indexCounts;
 
-	int integrationMethod;
+	int integrationMethod = 0;
 	bool applyGravity = false;
 
 protected:
@@ -29,6 +29,8 @@ protected:
 	void applySharedGUI();
 
 	const int getIntegrationMethod() const { return integrationMethod; }
+	void setGravity(bool gravity) { applyGravity = gravity; }
+	void updateMovement(float dt);
 
 public:
 	virtual ~Scenario() = default;

@@ -10,8 +10,8 @@ using namespace DirectX;
 
 #define COMPILE_CSO
 
-constexpr UINT _windowWidth = 800;
-constexpr UINT _windowHeight = 600;
+constexpr UINT _windowWidth = 1200;
+constexpr UINT _windowHeight = 900;
 
 //--------------------------------------------------------------------------------------
 // Structures
@@ -45,7 +45,7 @@ struct Camera
 		if (zoom > 1.6f) zoom = 1.6f;
 
 		const float fov = XM_PIDIV2 / zoom; // Zoom scales the FOV
-		projection = XMMatrixPerspectiveFovLH(fov, 800.0f / 600.0f, 0.01f, 1000.0f);
+		projection = XMMatrixPerspectiveFovLH(fov, _windowWidth / _windowHeight, 0.01f, 1000.0f);
 		view = XMMatrixLookAtLH(eye, at, up);
 
 		//setOrthographicProjection();
@@ -84,7 +84,7 @@ struct Camera
 	void setOrthographicProjection()
 	{
 		const float orthoWidth = 10.0f / zoom;  // Adjust width based on zoom
-		const float orthoHeight = (600.0f / 800.0f) * orthoWidth; // Maintain aspect ratio
+		const float orthoHeight = (_windowHeight / _windowWidth) * orthoWidth; // Maintain aspect ratio
 
 		projection = XMMatrixOrthographicLH(orthoWidth, orthoHeight, 0.01f, 1000.0f);
 		view = XMMatrixLookAtLH(eye, at, XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f));
@@ -117,7 +117,8 @@ class D3DFramework final {
 
 	XMFLOAT4 _bgColour = { 0.54f, 0.75f, 0.77f, 1.0f };
 	float deltaTime = 0.0f;
-	float deltaTimeFactor = 1.0f;
+	const float deltaTimeFactors[4] = {0.25f, 0.5f, 1.0f, 2.0f};
+	float deltaTimeFactor = deltaTimeFactors[2];
 	static float time;
 	const float fixedTimesteps[4] = { 0.002f, 0.004f, 0.008f, 0.016f };
 	float fixedTimestep = fixedTimesteps[1];
@@ -136,6 +137,23 @@ class D3DFramework final {
 	void renderImGui();
 
 	void initCamera();
+
+	void setScenario(std::unique_ptr<Scenario> scenario)
+	{
+		if (_scenario)
+			_scenario.get()->onUnload();
+		_scenario = std::move(scenario);
+		_scenario.get()->onLoad();
+	}
+
+	void resetScenario()
+	{
+		if (!_scenario) return;
+
+		_scenario.get()->onUnload();
+		_scenario.get()->onLoad();
+
+	}
 
 public:
 
@@ -158,14 +176,6 @@ public:
 	HWND getWindowHandle() const { return _hWnd; }
 	ID3D11Device* getDevice() const { return _pd3dDevice; }
 	ID3D11DeviceContext* getDeviceContext() const { return _pImmediateContext; }
-
-	void setScenario(std::unique_ptr<Scenario> scenario)
-	{
-		if (_scenario)
-			_scenario.get()->onUnload();
-		_scenario = std::move(scenario);
-		_scenario.get()->onLoad();
-	}
 
 	void setBackgroudColor(const XMFLOAT4& colour) { _bgColour = colour; }
 	XMFLOAT4 getBackgroundColor() const { return _bgColour; }

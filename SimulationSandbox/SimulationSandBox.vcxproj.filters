@@ -51,7 +51,12 @@
     <ClCompile Include="ShaderManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Moving.cpp" />
+    <ClCompile Include="Moving.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Falling.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h" />
@@ -73,7 +78,12 @@
     <ClInclude Include="ShaderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Moving.h" />
+    <ClInclude Include="Moving.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Falling.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Simulation.rc" />

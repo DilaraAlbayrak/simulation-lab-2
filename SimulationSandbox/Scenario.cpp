@@ -129,11 +129,23 @@ void Scenario::applySharedGUI()
         integrationMethod = 0;
     }
     ImGui::SameLine();
-    if (ImGui::RadioButton("Verlet", integrationMethod == 1)) {
+    if (ImGui::RadioButton("RK4", integrationMethod == 1)) {
         integrationMethod = 1;
     }
     ImGui::PopItemWidth();
     ImGui::End();
+}
+
+void Scenario::updateMovement(float dt)
+{
+    for (auto& obj : physicsObjects)
+    {
+        if (obj->getStaticInfo()) continue;
+
+        obj->setIntegrationMethod(getIntegrationMethod());
+
+        obj->Update(dt);
+    }
 }
 
 void Scenario::renderObjects()
