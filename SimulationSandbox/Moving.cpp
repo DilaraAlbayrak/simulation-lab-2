@@ -1,5 +1,4 @@
 #include "Moving.h"
-#include <atlbase.h>
 #include "Sphere.h"
 #include "Plane.h"
 #include <memory>
@@ -8,13 +7,13 @@ void Moving::onLoad()
 {
 	OutputDebugString(L">>>>>>>>>> Moving::onLoad\n");
 
-	// Create a plane
-	auto plane = std::make_unique<PhysicsObject>(std::make_unique<Plane>(), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), true);
+	// Create a plane default position, rotation, and scale
+	auto plane = std::make_unique<PhysicsObject>(std::make_unique<Plane>(), true);
 	plane->LoadModel("plane.sjg");
 	addPhysicsObject(std::move(plane));
 
 	// Create a sphere
-	auto sphere = std::make_unique<PhysicsObject>(std::make_unique<Sphere>(), DirectX::XMFLOAT3(-2.5f, -2.5f, 0.0f));
+	auto sphere = std::make_unique<PhysicsObject>(std::make_unique<Sphere>(DirectX::XMFLOAT3(-2.5f, -2.5f, 0.0f)));
 	sphere->LoadModel("sphere.sjg");
 	sphere->setVelocity({ 1.0f, 1.0f, 0.0f });
 	sphere->setAngularVelocity({ 1.0f, 1.0f, 0.0f });

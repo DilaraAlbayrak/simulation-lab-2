@@ -7,9 +7,8 @@ void PhysicsObject::moveSemiImplicitEuler(float dt)
     velocity.y += acceleration.y * dt;
     velocity.z += acceleration.z * dt;
 
-    position.x += velocity.x * dt;
-    position.y += velocity.y * dt;
-    position.z += velocity.z * dt;
+	DirectX::XMFLOAT3 deltaPos = { velocity.x * dt, velocity.y * dt, velocity.z * dt };
+	collider->incrementPosition(deltaPos);
 }
 
 void PhysicsObject::moveRK4(float dt)
@@ -45,7 +44,9 @@ void PhysicsObject::moveRK4(float dt)
     velocity.y += (dt / 6.0f) * (k1_a.y + 2.0f * k2_a.y + 2.0f * k3_a.y + k4_a.y);
     velocity.z += (dt / 6.0f) * (k1_a.z + 2.0f * k2_a.z + 2.0f * k3_a.z + k4_a.z);
 
-    position.x += (dt / 6.0f) * (k1_v.x + 2.0f * k2_v.x + 2.0f * k3_v.x + k4_v.x);
-    position.y += (dt / 6.0f) * (k1_v.y + 2.0f * k2_v.y + 2.0f * k3_v.y + k4_v.y);
-    position.z += (dt / 6.0f) * (k1_v.z + 2.0f * k2_v.z + 2.0f * k3_v.z + k4_v.z);
+	DirectX::XMFLOAT3 deltaPos = { (dt / 6.0f) * (k1_v.x + 2.0f * k2_v.x + 2.0f * k3_v.x + k4_v.x),
+                                   (dt / 6.0f)* (k1_v.y + 2.0f * k2_v.y + 2.0f * k3_v.y + k4_v.y),
+                                   (dt / 6.0f)* (k1_v.z + 2.0f * k2_v.z + 2.0f * k3_v.z + k4_v.z) };
+
+	collider->incrementPosition(deltaPos);
 }

@@ -23,10 +23,6 @@ class PhysicsObject
 private:
     std::unique_ptr<Collider> collider;
 
-    DirectX::XMFLOAT3 position = { 0.0f, 0.0f, 0.0f };   // Position in world space
-    DirectX::XMFLOAT3 rotation = { 0.0f, 0.0f, 0.0f };   // Rotation (pitch, yaw, roll)
-    DirectX::XMFLOAT3 scale = { 1.0f, 1.0f, 1.0f };      // Scale factors
-
     std::vector<Vertex> vertices;
     std::vector<int> indices;
 
@@ -47,47 +43,31 @@ private:
 
 	IntegrationMethod integrationMethod = SEMI_IMPLICIT_EULER;
 
-    void updateWorldMatrix()
-    {
-        DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scale.x, scale.y, scale.z);
-        DirectX::XMMATRIX rotationMatrix =
-            DirectX::XMMatrixRotationRollPitchYaw(rotation.x, rotation.y, rotation.z);
-        DirectX::XMMATRIX translationMatrix = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
-
-        DirectX::XMMATRIX worldMatrix = scaleMatrix * rotationMatrix * translationMatrix;
-        constantBuffer.World = DirectX::XMMatrixTranspose(worldMatrix);
-    }
-
 	void moveSemiImplicitEuler(float dt);
 	void moveRK4(float dt);
 
 	void updateRotation(float dt)
 	{
-		rotation.x += angularVelocity.x * dt;
-		rotation.y += angularVelocity.y * dt;
-		rotation.z += angularVelocity.z * dt;
+		DirectX::XMFLOAT3 deltaRot = { angularVelocity.x * dt, angularVelocity.y * dt, angularVelocity.z * dt };
+		collider->incrementRotation(deltaRot);
+		constantBuffer.World = collider->updateWorldMatrix();
 	}
 
-    void applyGravitationalForce()
-    {
-        if (isStatic || !applyGravity) return;
-    }
-
 public:
-    PhysicsObject(std::unique_ptr<Collider> col, DirectX::XMFLOAT3 startPos = {0.0f, 0.0f, 0.0f}, bool fixed = false)
-		: collider(std::move(col)), position(startPos), isStatic(fixed)
+    PhysicsObject(std::unique_ptr<Collider> col, bool fixed = false)
+		: collider(std::move(col)), isStatic(fixed)
     {
         inverseMass = (mass != 0.0f) ? 1.0f / mass : 0.0f;
         gravitationalForce = { 0.0f, 0.0f, -9.81f * mass };
 		colliding = false;
-        updateWorldMatrix();
+		constantBuffer.World = collider->updateWorldMatrix();
     }
 
 	bool checkCollision(const PhysicsObject& other) const
 	{
 		if (!collider || !other.collider) return false;
 
-		return collider->isColliding(*other.collider, position, other.position);
+		return collider->isColliding(*other.collider);
 	}
 
     bool LoadModel(const std::string& filename)
@@ -116,8 +96,7 @@ public:
 		}
 
 		updateRotation(deltaTime);
-
-        updateWorldMatrix();
+		constantBuffer.World = collider->updateWorldMatrix();
     }
 
     void applyForce(const DirectX::XMFLOAT3& force)
@@ -133,9 +112,6 @@ public:
 	const bool getStaticInfo() const { return isStatic; }
 	const bool getColidingInfo() const { return colliding; }
 
-    void setPosition(const DirectX::XMFLOAT3& newPos) { position = newPos; updateWorldMatrix(); }
-    void setRotation(const DirectX::XMFLOAT3& newRot) { rotation = newRot; updateWorldMatrix(); }
-    void setScale(const DirectX::XMFLOAT3& newScale) { scale = newScale; updateWorldMatrix(); }
 	void setVelocity(const DirectX::XMFLOAT3& newVel) { velocity = newVel; }
 	void setAngularVelocity(const DirectX::XMFLOAT3& newAngVel) { angularVelocity = newAngVel; }
 	void setConstantBuffer(const ConstantBuffer& cb) { constantBuffer = cb; }

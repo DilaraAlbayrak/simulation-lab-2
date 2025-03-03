@@ -1,13 +1,20 @@
 #include "pch.h"
 #include "Plane.h"
+#include "Sphere.h"
 
-bool Plane::isColliding(const Collider& other, const DirectX::XMFLOAT3& myPos, const DirectX::XMFLOAT3& otherPos) const 
+bool Plane::isColliding(const Collider& other) const 
 {
-    return other.isCollidingWithPlane(myPos, _normal);
+    return other.isCollidingWithPlane(*this);
 }
 
-bool Plane::isCollidingWithSphere(const DirectX::XMFLOAT3& spherePos, const DirectX::XMFLOAT3& otherPos, float radius)  const
+bool Plane::isCollidingWithSphere(const Collider& other)  const
 {
+    const auto* sphere = dynamic_cast<const Sphere*>(&other);
+    if (!sphere) return false;
+
+	auto spherePos = sphere->getPosition();
+	auto radius = sphere->getRadius();
+
     float distance = fabs(_normal.x * spherePos.x +
         _normal.y * spherePos.y +
         _normal.z * spherePos.z) /
@@ -16,7 +23,7 @@ bool Plane::isCollidingWithSphere(const DirectX::XMFLOAT3& spherePos, const Dire
     return distance <= radius;
 }
 
-bool Plane::isCollidingWithPlane(const DirectX::XMFLOAT3& planePos, const DirectX::XMFLOAT3& planeNormal) const 
+bool Plane::isCollidingWithPlane(const Collider& other) const
 {
     return false;
 }

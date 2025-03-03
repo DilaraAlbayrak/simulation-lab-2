@@ -1,6 +1,5 @@
 #pragma once
 #include "Scenario.h"
-#include <memory>
 
 class Colliding : public Scenario
 {
