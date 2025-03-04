@@ -85,6 +85,10 @@ public:
                              gravitationalForce.y * inverseMass,
                              gravitationalForce.z * inverseMass };
 		}
+		else
+		{
+			acceleration = { 0.0f, 0.0f, 0.0f };
+		}
 
 		if (integrationMethod == SEMI_IMPLICIT_EULER)
 		{

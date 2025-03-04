@@ -153,6 +153,7 @@ void Scenario::updateMovement(float dt)
 				{
 					obj->setVelocity({ 0.0f, 0.0f, 0.0f });
 					obj->setAngularVelocity({ 0.0f, 0.0f, 0.0f });
+					obj->setGravity(false);
 					break;
 				}
 			}
